@@ -8,6 +8,7 @@ ROLE_CHOICES = (
     ('admin', 'Администратор'),
 )
 
+
 class User(AbstractUser):
     bio = models.TextField(
         verbose_name='Биография',
