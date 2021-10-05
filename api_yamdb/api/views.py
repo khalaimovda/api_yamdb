@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from ..reviews.models import Categories, Genres, Titles, Reviews, Comments
+from reviews.models import Categories, Genres, Titles, Reviews, Comments
 from .serializers import (
     CategoriesSerializer, GenresSerializer, TitlesSerializer,
     ReviewsSerializer, CommentsSerializer

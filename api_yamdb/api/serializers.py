@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ..reviews.models import Categories, Genres, Titles, Reviews, Comments
+from reviews.models import Categories, Genres, Titles, Reviews, Comments
 
 
 class CommentsSerializer(serializers.ModelSerializer):
@@ -9,7 +9,7 @@ class CommentsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'author', 'pub_date', 'text', 'review')
+        fields = '__all__'
         model = Comments
 
 
@@ -19,7 +19,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'author', 'pub_date', 'score', 'text', 'title')
+        fields = '__all__'
         model = Reviews
 
 
