@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.crypto import get_random_string
 
 ROLE_CHOICES = (
     ('user', 'Пользователь'),
@@ -20,3 +21,6 @@ class User(AbstractUser):
         default='user',
         blank=True,
     )
+
+    def get_new_password(self):
+        return f'{get_random_string(length=12)}'
