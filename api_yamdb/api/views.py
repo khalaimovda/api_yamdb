@@ -1,10 +1,20 @@
+from django.contrib.auth import get_user_model
 from rest_framework import viewsets
+from rest_framework_simplejwt.views import TokenViewBase
 
 from reviews.models import Categories, Genres, Titles, Reviews, Comments
 from .serializers import (
     CategoriesSerializer, GenresSerializer, TitlesSerializer,
-    ReviewsSerializer, CommentsSerializer
+    ReviewsSerializer, CommentsSerializer, UserSerializer,
+    TokenObtainSerializer,
 )
+
+User = get_user_model()
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class CategoriesViewSet(viewsets.ModelViewSet):
@@ -31,3 +41,6 @@ class CommentsViewSet(viewsets.ModelViewSet):
     queryset = Comments.objects.all()
     serializer_class = CommentsSerializer
 
+
+class TokenObtainView(TokenViewBase):
+    serializer_class = TokenObtainSerializer
