@@ -9,6 +9,7 @@ from .views import (
     CommentsViewSet,
     UserViewSet,
     TokenObtainView,
+    AuthSignupView,
 )
 
 router = routers.DefaultRouter()
@@ -28,4 +29,5 @@ router.register(
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/token/', TokenObtainView.as_view(), name='token_obtain_pair'),
+    path('auth/signup/', AuthSignupView.as_view(), name='auth_signup')
 ]

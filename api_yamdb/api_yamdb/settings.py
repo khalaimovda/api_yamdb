@@ -135,3 +135,7 @@ SIMPLE_JWT = {
 
 
 PASSWORD_FIELD = 'confirmation_code'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails') 
