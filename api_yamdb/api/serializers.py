@@ -18,6 +18,27 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'first_name',
                   'last_name', 'bio', 'role', )
+        extra_kwargs = {
+            'username': {'required': True},
+            'email': {'required': True}
+        }
+
+
+class UserMeSerializer(serializers.ModelSerializer):
+
+    role = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name',
+                  'last_name', 'bio', 'role', )
+        extra_kwargs = {
+            'username': {'required': False},
+            'email': {'required': False},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+            'bio': {'required': False},
+        }
 
 
 class CommentsSerializer(serializers.ModelSerializer):
@@ -95,9 +116,8 @@ class TokenObtainSerializer(serializers.Serializer):
         self.user = authenticate(**authenticate_kwargs)
 
         if not api_settings.USER_AUTHENTICATION_RULE(self.user):
-            raise exceptions.AuthenticationFailed(
-                self.error_messages['no_active_account'],
-                'no_active_account',
+            raise exceptions.ValidationError(
+                detail=self.error_messages['no_active_account'],
             )
 
         refresh = self.get_token(self.user)
@@ -116,3 +136,32 @@ class TokenObtainSerializer(serializers.Serializer):
 class AuthSignupSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, min_length=1)
     email = serializers.EmailField(required=True, max_length=254)
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('"me" is forbidden username')
+        return value
+
+    def validate(self, attrs):
+        return super().validate(attrs)
+
+    def validate(self, data):
+        data = super().validate(data)
+
+        if not User.objects.filter(
+            username=data['username'],
+            email=data['email'],
+        ).exists():
+
+            if User.objects.filter(
+                username=data['username']
+            ).exists():
+                raise serializers.ValidationError(
+                    'A user with that username already exists.')
+
+            if User.objects.filter(
+                email=data['email']
+            ).exists():
+                raise serializers.ValidationError(
+                    'A user with this email already exists.')
+        return data
