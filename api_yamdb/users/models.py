@@ -10,6 +10,7 @@ ROLE_CHOICES = (
 
 
 class User(AbstractUser):
+    email = models.EmailField(unique=True)
     bio = models.TextField(
         verbose_name='Биография',
         blank=True,

@@ -2,8 +2,11 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from rest_framework import viewsets
 from rest_framework import status
+from rest_framework import filters
+from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenViewBase
 from drf_yasg.utils import swagger_auto_schema
 
@@ -11,8 +14,9 @@ from reviews.models import Categories, Genres, Titles, Reviews, Comments
 from .serializers import (
     CategoriesSerializer, GenresSerializer, TitlesSerializer,
     ReviewsSerializer, CommentsSerializer, UserSerializer,
-    TokenObtainSerializer, AuthSignupSerializer,
+    TokenObtainSerializer, AuthSignupSerializer, UserMeSerializer
 )
+from .permissions import IsSuperuserOrAdminPermission
 
 User = get_user_model()
 
@@ -20,6 +24,36 @@ User = get_user_model()
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [
+        permissions.IsAuthenticated, IsSuperuserOrAdminPermission]
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('username', )
+    lookup_field = 'username'
+    lookup_url_kwarg = 'username'
+
+    @action(
+        methods=['GET', 'PATCH'],
+        detail=False,
+        permission_classes=[permissions.IsAuthenticated],
+        serializer_class=UserMeSerializer,
+        filter_backends=(),
+        pagination_class=None
+    )
+    def me(self, request):
+        serializer_class = super().get_serializer_class()
+        if request.method == 'GET':
+            serializer = serializer_class(instance=request.user)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        elif request.method == 'PATCH':
+            serializer = serializer_class(
+                instance=request.user, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    data=serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoriesViewSet(viewsets.ModelViewSet):
@@ -81,6 +115,6 @@ class AuthSignupView(APIView):
             user.save()
 
             return Response(
-                data=serializer.data, status=status.HTTP_201_CREATED)
+                data=serializer.data, status=status.HTTP_200_OK)
         return Response(
             data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)

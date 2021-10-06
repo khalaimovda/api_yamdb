@@ -9,7 +9,7 @@ User = get_user_model()
 class UserCreationForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ('username',)
+        fields = ('username', )
         field_classes = {'username': UsernameField}
 
     def __init__(self, *args, **kwargs):
@@ -19,6 +19,9 @@ class UserCreationForm(forms.ModelForm):
                 self._meta.model.USERNAME_FIELD
             ].widget.attrs['autofocus'] = True
 
+        self.fields['username'].required = True
+        self.fields['email'].required = True
+
     def save(self, commit=True):
         user = super().save(commit=False)
         password = user.get_new_password()
@@ -26,3 +29,9 @@ class UserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', False)
+        if username == 'me':
+            raise forms.ValidationError('"me" is forbidden username')
+        return username
