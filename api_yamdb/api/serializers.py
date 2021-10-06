@@ -111,3 +111,8 @@ class TokenObtainSerializer(serializers.Serializer):
     @classmethod
     def get_token(cls, user):
         return RefreshToken.for_user(user)
+
+
+class AuthSignupSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, min_length=1)
+    email = serializers.EmailField(required=True, max_length=254)
