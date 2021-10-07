@@ -1,14 +1,13 @@
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import update_last_login
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
+from rest_framework_simplejwt.serializers import PasswordField
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.serializers import PasswordField
-
-from reviews.models import Categories, Genres, Titles, Reviews, Comments
+from reviews.models import Categories, Comments, Genres, Reviews, Titles
 
 User = get_user_model()
 
@@ -41,9 +40,19 @@ class UserMeSerializer(serializers.ModelSerializer):
         }
 
 
+class CurrentTitleDefault:
+    requires_context = True
+
+    def __call__(self, serializer_field):
+        return serializer_field.context['view'].kwargs['title_id']
+
+
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True, slug_field='username'
+    )
+    review = serializers.SlugRelatedField(
+        read_only=True, slug_field='id'
     )
 
     class Meta:
@@ -53,12 +62,22 @@ class CommentsSerializer(serializers.ModelSerializer):
 
 class ReviewsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field='username'
+        read_only=True, slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
+    title = serializers.SlugRelatedField(
+        read_only=True, slug_field='id',
+        default=CurrentTitleDefault()
     )
 
     class Meta:
         fields = '__all__'
         model = Reviews
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Reviews.objects.all(), fields=('author', 'title')
+            )
+        ]
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
