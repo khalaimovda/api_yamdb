@@ -161,9 +161,6 @@ class AuthSignupSerializer(serializers.Serializer):
             raise serializers.ValidationError('"me" is forbidden username')
         return value
 
-    def validate(self, attrs):
-        return super().validate(attrs)
-
     def validate(self, data):
         data = super().validate(data)
 
