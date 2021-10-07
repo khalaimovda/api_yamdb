@@ -9,7 +9,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenViewBase
 from reviews.models import Categories, Genres, Reviews, Titles
 
-from .permissions import IsSuperuserOrAdminPermission
+from .permissions import (IsAuthorModerAdminOrReadOnly,
+                          IsSuperuserOrAdminPermission)
 from .serializers import (AuthSignupSerializer, CategoriesSerializer,
                           CommentsSerializer, GenresSerializer,
                           ReviewsSerializer, TitlesSerializer,
@@ -71,6 +72,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
+    permission_classes = [IsAuthorModerAdminOrReadOnly]
 
     def get_queryset(self):
         title = get_object_or_404(Titles, id=self.kwargs['title_id'])
@@ -83,6 +85,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
+    permission_classes = [IsAuthorModerAdminOrReadOnly]
 
     def get_queryset(self):
         review = get_object_or_404(Reviews, id=self.kwargs['review_id'],
