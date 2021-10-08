@@ -17,6 +17,9 @@ class Category(models.Model):
             self.slug = self.name
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ['id', ]
+
 
 class Genre(models.Model):
     name = models.CharField('Имя жанра', max_length=256)
@@ -29,6 +32,9 @@ class Genre(models.Model):
         if not self.slug:
             self.slug = self.name
         super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['id', ]
 
 
 class Title(models.Model):
