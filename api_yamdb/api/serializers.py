@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import update_last_login
@@ -7,7 +9,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import PasswordField
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
-from reviews.models import Categories, Comments, Genres, Reviews, Titles
+from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
 
@@ -47,58 +49,66 @@ class CurrentTitleDefault:
         return serializer_field.context['view'].kwargs['title_id']
 
 
-class CommentsSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True, slug_field='username'
     )
-    review = serializers.SlugRelatedField(
-        read_only=True, slug_field='id'
-    )
 
     class Meta:
-        fields = '__all__'
-        model = Comments
+        model = Comment
+        fields = ('id', 'text', 'author', 'pub_date')
+        read_only_fields = ('id', 'author', 'pub_date')
 
 
-class ReviewsSerializer(serializers.ModelSerializer):
+class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field='username',
-        default=serializers.CurrentUserDefault()
-    )
-    title = serializers.SlugRelatedField(
-        read_only=True, slug_field='id',
-        default=CurrentTitleDefault()
+        read_only=True, slug_field='username'
     )
 
     class Meta:
-        fields = '__all__'
-        model = Reviews
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Reviews.objects.all(), fields=('author', 'title')
-            )
-        ]
+        fields = ('id', 'text', 'author', 'score', 'pub_date', 'title')
+        model = Review
+        read_only_fields = ('id', 'author', 'pub_date', 'title')
 
 
-class CategoriesSerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = '__all__'
-        model = Categories
+        fields = ('name', 'slug', )
+        model = Category
+        extra_kwargs = {
+            'name': {'required': True},
+            'slug': {'required': True},
+        }
 
 
-class GenresSerializer(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'slug', )
+        model = Genre
+
+
+class TitleReadSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
 
     class Meta:
-        fields = '__all__'
-        model = Genres
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category')
+        model = Title
 
 
-class TitlesSerializer(serializers.ModelSerializer):
+class TitleCreateUpdateSerializer(TitleReadSerializer):
+    genre = serializers.SlugRelatedField(
+        many=True, slug_field='slug', queryset=Genre.objects.all())
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all())
 
-    class Meta:
-        fields = '__all__'
-        model = Titles
+    def validate_year(self, value):
+        if value > datetime.now().year:
+            raise serializers.ValidationError(
+                'Год выпуска не может быть больше текущего')
+        return value
 
 
 class TokenObtainSerializer(serializers.Serializer):
