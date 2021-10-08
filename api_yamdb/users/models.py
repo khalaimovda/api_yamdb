@@ -25,3 +25,6 @@ class User(AbstractUser):
 
     def get_new_password(self):
         return f'{get_random_string(length=12)}'
+
+    class Meta:
+        ordering = ['id', ]
