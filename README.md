@@ -1,85 +1,115 @@
-# api_yamdb
-## Проект предназначен для отработки навыков групповой разработки с участием трех человек.
-## Проект YaMDb собирает отзывы (Review) пользователей на произведения (Titles)
-## Использование проекта возможно только через API 
+# YaMDb 
 
-### Ознакомиться с полным функционалом и примерами можно по адресу http://127.0.0.1:8000/redoc Доступному после запуска проекта 
-### Некоторые из примеров: 
+### Описание 
 
-### Получить список всех категорий
-```
-GET запрос: http://127.0.0.1:8000/api/v1/categories/
-Ответ:
-{
-  "name": "string",
-  "slug": "string"
-}
-```
-### Получение всех произведений.
-```
-GET запрос: http://127.0.0.1:8000/api/v1/titles/
-Ответ:
-[
-  {
-    "count": 0,
-    "next": "string",
-    "previous": "string",
-    "results": [
-      {
-        "id": 0,
-        "name": "string",
-        "year": 0,
-        "rating": 0,
-        "description": "string",
-        "genre": [
-          {
-            "name": "string",
-            "slug": "string"
-          }
-        ],
-        "category": {
-          "name": "string",
-          "slug": "string"
-        }
-      }
-    ]
-  }
-]
-```
-### Как запустить проект:
+Проект YaMDb призван помочь отработать навыки групповой разработки с участием трех человек.
+Проект реализует REST API для работы с отзывами на различные произведения искусства.
+API позволяет: 
+- Регистрировать пользователя с различными ролями (пользователь, модератор, администратор)
+- Выполнять аутентификацию с помощью JWT
+- Просматривать, создавать, редактировать и удалять произведения
+- Просматривать, создавать и удалять жанры и категории произведений
+- Просматривать, создавать, редактировать и удалять отзывы на произведения
+- Просматривать, создавать, редактировать и удалять комментарии к отзывам
+- Просматривать, создавать, редактировать и удалять пользвателей (администратор)
 
-Клонировать репозиторий и перейти в него в командной 
-```
+### Запуск проекта в dev-режиме (Windows) 
 
-Cоздать и активировать виртуальное окружение:
+Клонировать GitHub-репозиторийи : 
+``` 
+git clone https://github.com/khalaimovda/api_yamdb.git
+``` 
 
-```
-python3 -m venv env
-```
+Перейти в директорию проекта:
+``` 
+cd api_yamdb
+``` 
 
-```
-source env/bin/activate
-```
+Cоздать и активировать виртуальное окружение: 
+``` 
+python -m venv venv 
+source venv/Scripts/activate 
+``` 
 
-```
-python -m pip install --upgrade pip
-```
+Установить необходимые инструменты из файла зависимостей: 
+``` 
+pip install -r requirements.txt 
+``` 
 
-Установить зависимости из файла requirements.txt:
+Перейти в директорию основного приложения: 
+``` 
+cd api_yamdb 
+``` 
 
-```
-pip install -r requirements.txt
-```
+Выполнить миграции: 
+``` 
+python manage.py migrate 
+``` 
 
-Выполнить миграции:
+Заполнить БД тестовыми данными (опционально)
+``` 
+python manage.py filldb 
+``` 
 
-```
-python manage.py migrate
-```
+Запустить проект: 
+``` 
+python manage.py runserver 
+``` 
 
-Запустить проект:
+### Регистрация нового пользователя 
+Для регистрации нового пользователя необходимо выполнить запрос:
+``` 
+POST /api/v1/auth/signup/ 
+{ 
+    "email": "example@example.com"
+    "username": "my_username", 
+} 
+``` 
+На указанную почту придет код подтверждения, который нужно будет использовать для получения JWT (см. следующий шаг).
 
-```
-python3 manage.py runserver
-```
+### Аутентификация 
+Аутентификация на ресурсе происходит посредством JWT. Для его получения необходимо выполнить запрос: 
+``` 
+POST /api/v1/auth/token/  
+{ 
+    "username": "my_username", 
+    "confirmation_code": "my_confirmation_code"" 
+} 
+``` 
+В поле "confirmation_code" нужно передать, код полученный при регистрации пользователя (см. предыдущий шаг)
 
+Ответ будет выглядеть примерно так: 
+``` 
+{ 
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYzMjE1OTU2OSwianRpIjoiNWZlNjUxNjEyMDFmNDIwYjg3Y2YxMTIwYjliNzNkMzUiLCJ1c2VyX2lkIjoxfQ.Ugsfl2RUAsIYSnErd4ubDaOLhmCm3yQ3paik90OvQFI"
+} 
+``` 
+Все последующие запросы к ресурсу, требующие аутентификации, отправлять с заголовком 
+``` 
+Authorization: Bearer token
+``` 
+
+### Пример запроса к API 
+
+Добавить новый отзыв "Текст отзыва" к произведению с id = 1, проставить произведению оценку 7 из 10:
+``` 
+POST /api/v1/titles/1/reviews/
+
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYzMjE1OTU2OSwianRpIjoiNWZlNjUxNjEyMDFmNDIwYjg3Y2YxMTIwYjliNzNkMzUiLCJ1c2VyX2lkIjoxfQ.Ugsfl2RUAsIYSnErd4ubDaOLhmCm3yQ3paik90OvQFI
+
+{ 
+    "text": "Текст отзыва", 
+    "score":  7
+} 
+``` 
+
+**Более подробную документацию API смотрите на** 
+``` 
+/redoc/
+/swagger/ 
+``` 
+
+### Авторы 
+- Дмитрий Халаимов
+- Роман Гербер
+- Алексей Положенцев
