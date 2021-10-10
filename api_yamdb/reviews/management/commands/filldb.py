@@ -1,16 +1,14 @@
-import os
 import csv
+import os
 from typing import Union
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
-from django.db.utils import DatabaseError
-from django.db.models import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+from django.db.models import ObjectDoesNotExist
+from django.db.utils import DatabaseError
 
-from reviews.models import (
-    Category, Genre, Title, Review, Comment,
-)
+from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
 

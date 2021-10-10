@@ -9,6 +9,7 @@ from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import PasswordField
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
