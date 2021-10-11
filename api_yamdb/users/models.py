@@ -23,8 +23,13 @@ class User(AbstractUser):
         blank=True,
     )
 
-    def get_new_password(self):
-        return f'{get_random_string(length=12)}'
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_admin(self):
+        return self.is_superuser or self.role == 'admin' 
 
     class Meta:
         ordering = ['id', ]
