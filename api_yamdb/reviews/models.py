@@ -7,15 +7,10 @@ User = get_user_model()
 
 class Category(models.Model):
     name = models.CharField('Имя категории', max_length=256)
-    slug = models.SlugField('Slug категории', max_length=50, unique=True)
+    slug = models.SlugField('Slug категории', max_length=150, unique=True)
 
     def __str__(self):
         return self.slug
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = self.name
-        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['id', ]
@@ -23,7 +18,7 @@ class Category(models.Model):
 
 class Genre(models.Model):
     name = models.CharField('Имя жанра', max_length=256)
-    slug = models.SlugField('Slug жанра', max_length=50, unique=True)
+    slug = models.SlugField('Slug жанра', max_length=150, unique=True)
 
     def __str__(self):
         return self.slug
