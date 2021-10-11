@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
@@ -8,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenViewBase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import Category, Genre, Review, Title
 from .filters import TitleFilter
@@ -151,8 +152,19 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, review=review)
 
 
-class TokenObtainView(TokenViewBase):
-    serializer_class = TokenObtainSerializer
+class TokenObtainView(APIView):
+    permission_classes = ()
+
+    @swagger_auto_schema(
+        request_body=TokenObtainSerializer
+    )
+    def post(self, request):
+        serializer = TokenObtainSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.get(username=request.data['username'])
+        refresh = RefreshToken.for_user(user=user)
+        data = {'token': str(refresh.access_token)}
+        return Response(status=status.HTTP_200_OK, data=data)
 
 
 class AuthSignupView(APIView):
@@ -163,28 +175,25 @@ class AuthSignupView(APIView):
     )
     def post(self, request):
         serializer = AuthSignupSerializer(data=request.data)
-        if serializer.is_valid():
-            user = User.objects.get_or_create(
-                username=serializer.validated_data['username'],
-                email=serializer.validated_data['email'],
-            )[0]
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.get_or_create(
+            username=serializer.validated_data['username'],
+            email=serializer.validated_data['email'],
+        )[0]
 
-            new_password = user.get_new_password()
+        confirmation_code = default_token_generator.make_token(user)
 
-            send_mail(
-                'Yamdb. Код подтверждения.',
-                'Вы зарегистрировались на ресурсе Yamdb.\n'
-                f'username = {serializer.validated_data["username"]}\n'
-                f'confirmation_code = {new_password}',
-                'yamdb@example.com',
-                [serializer.validated_data['email']],
-                fail_silently=False,
-            )
+        send_mail(
+            'Yamdb. Код подтверждения.',
+            'Вы зарегистрировались на ресурсе Yamdb.\n'
+            f'username = {serializer.validated_data["username"]}\n'
+            f'confirmation_code = {confirmation_code}',
+            'yamdb@example.com',
+            [serializer.validated_data['email']],
+            fail_silently=False,
+        )
 
-            user.set_password(new_password)
-            user.save()
+        user.save()
 
-            return Response(
-                data=serializer.data, status=status.HTTP_200_OK)
         return Response(
-            data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            data=serializer.data, status=status.HTTP_200_OK)
