@@ -1,26 +1,22 @@
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import (
-    filters, permissions, serializers,
-    status, viewsets, mixins)
+from rest_framework import (filters, mixins, permissions, serializers, status,
+                            viewsets)
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenViewBase
-from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Category, Genre, Review, Title
-
 from .filters import TitleFilter
-from .permissions import (IsSuperuserOrAdminOrReadOnly,
-                          IsSuperuserOrAdmin,
-                          IsAuthorOrModeratorOrAdminOrSuperuser)
+from .permissions import (IsAuthorOrModeratorOrAdminOrSuperuser,
+                          IsSuperuserOrAdmin, IsSuperuserOrAdminOrReadOnly)
 from .serializers import (AuthSignupSerializer, CategorySerializer,
-                          CommentSerializer, GenreSerializer,
-                          ReviewSerializer, TitleCreateUpdateSerializer,
-                          TitleReadSerializer,
+                          CommentSerializer, GenreSerializer, ReviewSerializer,
+                          TitleCreateUpdateSerializer, TitleReadSerializer,
                           TokenObtainSerializer, UserMeSerializer,
                           UserSerializer)
 
