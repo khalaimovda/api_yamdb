@@ -42,20 +42,19 @@ class UserViewSet(viewsets.ModelViewSet):
         pagination_class=None
     )
     def me(self, request):
-        serializer_class = super().get_serializer_class()
         if request.method == 'GET':
-            serializer = serializer_class(instance=request.user)
+            serializer = self.get_serializer(request.user)
             return Response(data=serializer.data, status=status.HTTP_200_OK)
-        elif request.method == 'PATCH':
-            serializer = serializer_class(
-                instance=request.user, data=request.data)
-            if serializer.is_valid():
+        else:
+            serializer = self.get_serializer(
+                request.user, data=request.data, partial=True
+            )
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
                     data=serializer.data, status=status.HTTP_200_OK)
             return Response(
                 data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryViewSet(
