@@ -4,8 +4,7 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import (filters, mixins, permissions, serializers, status,
-                            viewsets)
+from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -120,13 +119,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs['title_id'])
-        if Review.objects.filter(
-            author=self.request.user, title=title
-        ).exists():
-            raise serializers.ValidationError(
-                'На одно произведение пользователь'
-                'может оставить только один отзыв')
         serializer.save(author=self.request.user, title=title)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        title = get_object_or_404(Title, id=self.kwargs['title_id'])
+        context.update({
+            'action': self.action,
+            'title': title,
+            'user': self.request.user
+        })
+        return context
 
 
 class CommentViewSet(viewsets.ModelViewSet):

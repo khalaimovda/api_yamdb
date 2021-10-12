@@ -69,6 +69,19 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         read_only_fields = ('id', 'author', 'pub_date', 'title')
 
+    def validate(self, data):
+        data = super().validate(data)
+        if self._kwargs['context']['action'] == 'create':
+            user = self._kwargs['context']['user']
+            title = self._kwargs['context']['title']
+            if Review.objects.filter(
+                author=user, title=title
+            ).exists():
+                raise serializers.ValidationError(
+                    'На одно произведение пользователь'
+                    'может оставить только один отзыв')
+        return data
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
