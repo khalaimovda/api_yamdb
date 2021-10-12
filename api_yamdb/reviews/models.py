@@ -23,11 +23,6 @@ class Genre(models.Model):
     def __str__(self):
         return self.slug
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = self.name
-        super().save(*args, **kwargs)
-
     class Meta:
         ordering = ['id', ]
 
