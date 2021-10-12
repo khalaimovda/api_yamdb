@@ -46,11 +46,6 @@ class Title(models.Model):
         help_text='Выберете категорию', null=True
     )
 
-    @property
-    def rating(self):
-        scores = [review.score for review in self.reviews.all()]
-        return None if not len(scores) else sum(scores) / len(scores)
-
     def __str__(self):
         return self.name
 
