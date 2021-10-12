@@ -97,6 +97,11 @@ class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
 
+    # С DecimalField не проходит тесты
+    # rating = serializers.DecimalField(
+    #     max_digits=4, decimal_places=2, read_only=True)
+    rating = serializers.IntegerField(read_only=True)
+
     class Meta:
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category')
