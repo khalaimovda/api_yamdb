@@ -45,16 +45,15 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)
             return Response(data=serializer.data, status=status.HTTP_200_OK)
-        else:
-            serializer = self.get_serializer(
-                request.user, data=request.data, partial=True
-            )
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response(
-                    data=serializer.data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(
+            request.user, data=request.data, partial=True
+        )
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
             return Response(
-                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                data=serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryViewSet(
