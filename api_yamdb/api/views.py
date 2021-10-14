@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
@@ -178,10 +179,13 @@ class TokenObtainView(APIView):
 def auth_signup(request):
     serializer = AuthSignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user = User.objects.get_or_create(
-        username=serializer.validated_data['username'],
-        email=serializer.validated_data['email'],
-    )[0]
+    try:
+        user = User.objects.get_or_create(
+            username=serializer.validated_data['username'],
+            email=serializer.validated_data['email'],
+        )[0]
+    except IntegrityError as e:
+        return Response(data=repr(e), status=status.HTTP_400_BAD_REQUEST)
 
     confirmation_code = default_token_generator.make_token(user)
 
@@ -196,5 +200,4 @@ def auth_signup(request):
     )
 
     user.save()
-
     return Response(data=serializer.data, status=status.HTTP_200_OK)

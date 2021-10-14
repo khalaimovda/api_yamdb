@@ -135,24 +135,3 @@ class AuthSignupSerializer(serializers.Serializer):
         if value == 'me':
             raise serializers.ValidationError('"me" is forbidden username')
         return value
-
-    def validate(self, data):
-        data = super().validate(data)
-
-        if not User.objects.filter(
-            username=data['username'],
-            email=data['email'],
-        ).exists():
-
-            if User.objects.filter(
-                username=data['username']
-            ).exists():
-                raise serializers.ValidationError(
-                    'A user with that username already exists.')
-
-            if User.objects.filter(
-                email=data['email']
-            ).exists():
-                raise serializers.ValidationError(
-                    'A user with this email already exists.')
-        return data
