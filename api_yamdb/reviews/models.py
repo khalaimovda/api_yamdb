@@ -23,11 +23,6 @@ class Genre(models.Model):
     def __str__(self):
         return self.slug
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = self.name
-        super().save(*args, **kwargs)
-
     class Meta:
         ordering = ['id', ]
 
@@ -45,11 +40,6 @@ class Title(models.Model):
         Category, on_delete=models.SET_NULL, related_name='titles',
         help_text='Выберете категорию', null=True
     )
-
-    @property
-    def rating(self):
-        scores = [review.score for review in self.reviews.all()]
-        return None if not len(scores) else sum(scores) / len(scores)
 
     def __str__(self):
         return self.name

@@ -1,14 +1,11 @@
 from datetime import datetime
 
-from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import update_last_login
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
-from django.utils.translation import gettext_lazy as _
-from rest_framework import exceptions, serializers
-from rest_framework.exceptions import ValidationError
-from rest_framework_simplejwt.serializers import PasswordField
-from rest_framework_simplejwt.settings import api_settings
+from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import Category, Comment, Genre, Review, Title
@@ -72,6 +69,19 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         read_only_fields = ('id', 'author', 'pub_date', 'title')
 
+    def validate(self, data):
+        data = super().validate(data)
+        if self._kwargs['context']['action'] == 'create':
+            user = self._kwargs['context']['user']
+            title = self._kwargs['context']['title']
+            if Review.objects.filter(
+                author=user, title=title
+            ).exists():
+                raise serializers.ValidationError(
+                    'На одно произведение пользователь'
+                    'может оставить только один отзыв')
+        return data
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -94,6 +104,11 @@ class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
 
+    # С DecimalField не проходит тесты
+    # rating = serializers.DecimalField(
+    #     max_digits=4, decimal_places=2, read_only=True)
+    rating = serializers.IntegerField(read_only=True)
+
     class Meta:
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category')
@@ -114,54 +129,21 @@ class TitleCreateUpdateSerializer(TitleReadSerializer):
 
 
 class TokenObtainSerializer(serializers.Serializer):
-    username_field = User.USERNAME_FIELD
-    password_field = settings.PASSWORD_FIELD
+    username = serializers.CharField(validators=[UnicodeUsernameValidator()], )
+    confirmation_code = serializers.CharField(max_length=30)
 
-    default_error_messages = {
-        'no_active_account': _(
-            'No active account found with the given credentials'
-        )
-    }
+    def validate(self, data):
+        data = super().validate(data)
+        user = get_object_or_404(klass=User, username=data['username'])
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        if not default_token_generator.check_token(
+            user, data['confirmation_code']
+        ):
+            raise ValidationError(message='Confirmation code is incorrect')
 
-        self.fields[self.username_field] = serializers.CharField()
-        self.fields[self.password_field] = PasswordField()
-
-    def validate(self, attrs):
-        authenticate_kwargs = {
-            self.username_field: attrs[self.username_field],
-            'password': attrs[self.password_field],
-        }
-        try:
-            authenticate_kwargs['request'] = self.context['request']
-        except KeyError:
-            pass
-
-        get_object_or_404(
-            klass=User,
-            username=attrs[self.username_field]
-        )
-
-        self.user = authenticate(**authenticate_kwargs)
-
-        if not api_settings.USER_AUTHENTICATION_RULE(self.user):
-            raise exceptions.ValidationError(
-                detail=self.error_messages['no_active_account'],
-            )
-
-        refresh = self.get_token(self.user)
-        data = {'token': str(refresh.access_token)}
-
-        if api_settings.UPDATE_LAST_LOGIN:
-            update_last_login(None, self.user)
-
+        refresh = RefreshToken.for_user(user)
+        data['token'] = str(refresh.access_token)
         return data
-
-    @classmethod
-    def get_token(cls, user):
-        return RefreshToken.for_user(user)
 
 
 class AuthSignupSerializer(serializers.Serializer):

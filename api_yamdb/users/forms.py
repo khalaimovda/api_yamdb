@@ -22,14 +22,6 @@ class UserCreationForm(forms.ModelForm):
         self.fields['username'].required = True
         self.fields['email'].required = True
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        password = user.get_new_password()
-        user.set_password(password)
-        if commit:
-            user.save()
-        return user
-
     def clean_username(self):
         username = self.cleaned_data.get('username', False)
         if username == 'me':

@@ -67,11 +67,7 @@ class Command(BaseCommand):
         self.stdout.write('##########################################')
         self.stdout.write(f'Model: {model.__name__}')
         self.stdout.write('##########################################')
-        try:
-            f = open(file=file_path, encoding='utf-8')
-        except FileNotFoundError:
-            self.stdout.write(f'CSV file {file_path} not found')
-        else:
+        with open(file=file_path, encoding='utf-8') as f:
             reader = csv.reader(f)
             header_row = next(reader)
             try:
@@ -80,37 +76,31 @@ class Command(BaseCommand):
             except AttributeError:
                 self.stderr.write(f'There are incorrect field names in'
                                   f' {file_path}. Migration canceled.')
-            else:
-                for row in reader:
-                    self.stdout.write('')
-                    data = {header_row[i]: row[i] for i in range(0, len(row))}
-                    self.stdout.write(f'data = {data}')
-                    if model.objects.filter(id=data['id']).exists():
-                        self.stdout.write(f'Object with id = {data["id"]}'
-                                          ' already exists')
-                        continue
-                    try:
-                        model.objects.create(**data)
-                    except DatabaseError as error:
-                        self.stdout.write('DatabaseError. Object not created')
-                        self.print_err(error)
-                    else:
-                        self.stdout.write('Object created')
-            finally:
-                self.stdout.write('##########################################')
+                return
+            for row in reader:
                 self.stdout.write('')
+                data = {header_row[i]: row[i] for i in range(0, len(row))}
+                self.stdout.write(f'data = {data}')
+                if model.objects.filter(id=data['id']).exists():
+                    self.stdout.write(f'Object with id = {data["id"]}'
+                                      ' already exists')
+                    continue
+                try:
+                    model.objects.create(**data)
+                except DatabaseError as error:
+                    self.stdout.write('DatabaseError. Object not created')
+                    self.print_err(error)
+                else:
+                    self.stdout.write('Object created')
 
-            f.close()
+        self.stdout.write('##########################################')
+        self.stdout.write('')
 
     def load_genre_title(self, file_path: str):
         self.stdout.write('##########################################')
         self.stdout.write('Model: Title and Genre ManyToMany')
         self.stdout.write('##########################################')
-        try:
-            f = open(file=file_path, encoding='utf-8')
-        except FileNotFoundError:
-            self.stdout.write(f'CSV file {file_path} not found')
-        else:
+        with open(file=file_path, encoding='utf-8') as f:
             reader = csv.reader(f)
             header_row = next(reader)
             try:
@@ -123,32 +113,29 @@ class Command(BaseCommand):
             except AssertionError as error:
                 self.stdout.write(f'CSV file {file_path} is incorrect')
                 self.print_err(error)
+                return
 
-            else:
-
-                for row in reader:
-                    self.stdout.write('')
-                    data = {header_row[i]: row[i] for i in range(0, len(row))}
-                    self.stdout.write(f'data = {data}')
-                    id, title_id, genre_id = map(int, row)  # noqa
-                    try:
-                        title = Title.objects.get(pk=title_id)
-                        genre = Genre.objects.get(pk=genre_id)
-                    except ObjectDoesNotExist as error:
-                        self.stdout.write('Incorrect object id.'
-                                          'Object not found')
-                        self.print_err(error)
-                    else:
-                        if title.genre.filter(id=genre_id):
-                            self.stdout.write('This relation already exists')
-                        else:
-                            title.genre.add(genre)
-                            self.stdout.write('Relation successfully set')
-            finally:
-                self.stdout.write('##########################################')
+            for row in reader:
                 self.stdout.write('')
+                data = {header_row[i]: row[i] for i in range(0, len(row))}
+                self.stdout.write(f'data = {data}')
+                id, title_id, genre_id = map(int, row)  # noqa
+                try:
+                    title = Title.objects.get(pk=title_id)
+                    genre = Genre.objects.get(pk=genre_id)
+                except ObjectDoesNotExist as error:
+                    self.stdout.write('Incorrect object id.'
+                                      'Object not found')
+                    self.print_err(error)
+                    continue
+                if title.genre.filter(id=genre_id):
+                    self.stdout.write('This relation already exists')
+                else:
+                    title.genre.add(genre)
+                    self.stdout.write('Relation successfully set')
 
-            f.close()
+        self.stdout.write('##########################################')
+        self.stdout.write('')
 
     def print_err(self, error):
         self.stdout.write(getattr(error, 'message', repr(error)))
