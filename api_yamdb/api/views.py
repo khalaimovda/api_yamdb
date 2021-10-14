@@ -92,7 +92,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filterset_class = TitleFilter
     lookup_url_kwarg = 'titles_id'
-    lookup_field = 'pk'
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -103,7 +102,6 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     lookup_url_kwarg = 'review_id'
-    lookup_field = 'pk'
 
     def get_permissions(self):
         if self.action in ('update', 'partial_update', 'destroy'):
@@ -134,7 +132,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     lookup_url_kwarg = 'comment_id'
-    lookup_field = 'pk'
 
     def get_permissions(self):
         if self.action in ('update', 'partial_update', 'destroy'):
