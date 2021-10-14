@@ -1,12 +1,8 @@
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import Category, Comment, Genre, Review, Title
 
@@ -129,19 +125,6 @@ class TitleCreateUpdateSerializer(TitleReadSerializer):
 class TokenObtainSerializer(serializers.Serializer):
     username = serializers.CharField(validators=[UnicodeUsernameValidator()], )
     confirmation_code = serializers.CharField(max_length=30)
-
-    def validate(self, data):
-        data = super().validate(data)
-        user = get_object_or_404(klass=User, username=data['username'])
-
-        if not default_token_generator.check_token(
-            user, data['confirmation_code']
-        ):
-            raise ValidationError(message='Confirmation code is incorrect')
-
-        refresh = RefreshToken.for_user(user)
-        data['token'] = str(refresh.access_token)
-        return data
 
 
 class AuthSignupSerializer(serializers.Serializer):

@@ -2,12 +2,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -160,7 +161,13 @@ class TokenObtainView(APIView):
     def post(self, request):
         serializer = TokenObtainSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = User.objects.get(username=request.data['username'])
+        user = get_object_or_404(klass=User, username=request.data['username'])
+
+        if not default_token_generator.check_token(
+            user, request.data['confirmation_code']
+        ):
+            raise ValidationError(detail='Confirmation code is incorrect')
+
         refresh = RefreshToken.for_user(user=user)
         data = {'token': str(refresh.access_token)}
         return Response(status=status.HTTP_200_OK, data=data)
