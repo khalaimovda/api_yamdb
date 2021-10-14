@@ -128,7 +128,7 @@ class TokenObtainSerializer(serializers.Serializer):
 
 
 class AuthSignupSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150, min_length=1)
+    username = serializers.CharField(max_length=150, required=True)
     email = serializers.EmailField(required=True, max_length=254)
 
     def validate_username(self, value):
